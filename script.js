@@ -7,8 +7,8 @@ async function search(lat, lng, searchTerms) {
             query: encodeURI(searchTerms), //encodeURI is used to convert special characters to their encoded eqv so that query will be wellformed
             ll: lat + "," + lng,
             sort: "DISTANCE",
-            // radius: 1000,
-            limit: 50,
+            radius: 1000,
+            limit: 10,
             // postcode: searchTerms,
 
         },
@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", async function(){
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
 
     document.querySelector("#submitBtn").addEventListener("click",async function(){
-
         let input = document.querySelector("#input").value;
         // console.log(input);
         let output = await search(1.29,103.85,input);
@@ -71,7 +70,26 @@ document.addEventListener("DOMContentLoaded", async function(){
         let s_marker = L.marker([lat, long]);
          s_marker.addTo(map);
 
+         let schoolResult = await search(lat,long,"school");
+        //  console.log(schoolResult);
 
+        // drawMarkerOnMap(schoolResult);
+
+        //  map.setView(lat,long, 13)
+
+        //  map.removeLayer(s_marker);
+
+        for(let x of schoolResult.results){
+
+            lat = x.geocodes.main.latitude;
+            long = x.geocodes.main.longitude;
+            console.log(lat);    
+            console.log(long);        
+            L.marker([lat, long]).addTo(map);
+
+           
+            // nearbyMarker.addTo(map);
+        }
 
 
 
@@ -88,3 +106,23 @@ document.addEventListener("DOMContentLoaded", async function(){
 
 
 })
+
+async function drawMarkerOnMap(results){
+
+    let nearbyLocation = await results;
+    let lat = "";
+    let long = "";
+    console.log(nearbyLocation.results[0].geocodes.main.latitude);
+    for(let x of nearbyLocation.results){
+
+        lat = x.geocodes.main.latitude;
+        long = x.geocodes.main.longitude;
+        console.log(lat);    
+        console.log(long);        
+    
+       
+        // nearbyMarker.addTo(map);
+    }
+
+
+}
