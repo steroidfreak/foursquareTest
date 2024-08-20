@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", async function(){
         console.log(long);
         // drawMarkerOnMap(lat,long);
         s_marker = L.marker([lat, long], {icon: redIcon});
-        map.setView([lat, long], 13)
+        map.setView([lat, long], 16)
         // s_marker = L.marker([lat, long]);
         s_marker.addTo(map);
         s_marker.bindPopup(`<p>${postalCodeResult.results[0].ADDRESS}</p>`)
