@@ -110,7 +110,7 @@ function drawMarkerOnLayer(data){
         if (name.includes("Primary")||name.includes("primary")) {
             console.log(name);
             let schoolMarker=L.marker([data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude]).addTo(nearbyLocationMarkerLayer);
-            schoolMarker.bindPopup(`<p>${data.results[i].name}</p>`)
+            schoolMarker.bindPopup(`<p>${data.results[i].name}, ${data.results[i].distance}m away from location.</p>`)
             name = "";
         }
         // L.marker([data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude]).addTo(nearbyLocationMarkerLayer);
