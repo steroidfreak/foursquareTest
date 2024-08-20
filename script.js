@@ -1,5 +1,25 @@
 const BASE_API_URL = "https://api.foursquare.com/v3";
-const API_KEY = "fsq30S6asd5gUSZuzHHx1O58Fd3yB1nnODQSxSHrPKBdj5I="
+const API_KEY = "fsq30S6asd5gUSZuzHHx1O58Fd3yB1nnODQSxSHrPKBdj5I=";
+
+const redIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+  
+let schoolLayerGroup = L.layerGroup();
+let foodLayerGroup = L.layerGroup();
+let s_marker = L.marker([1,3521,103.82]);
+
+// set map to centre of singapore
+let map = L.map("map");
+map.setView([1.3521,103.82],13);
+
+// setup the tile layers
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
 
 async function search(lat, lng, searchTerms) {
     const response = await axios.get(`${BASE_API_URL}/places/search`, {
@@ -8,7 +28,7 @@ async function search(lat, lng, searchTerms) {
             ll: lat + "," + lng,
             sort: "DISTANCE",
             radius: 1000,
-            limit: 10,
+            limit: 50,
             // postcode: searchTerms,
 
         },
@@ -18,6 +38,7 @@ async function search(lat, lng, searchTerms) {
             Authorization: API_KEY
         }
     })
+    console.log(response.data);
     return response.data;
 }
 
@@ -29,32 +50,12 @@ async function searchPostalCode(postalCode) {
     return response.data;
 }
 
-// async function drawMarkerOnMap(lat,long){
-//     console.log(lat);
-//     console.log(long);
-
-
-//     let smarker = await L.marker(`[${lat}, ${long}]`);
-//     smarker.addTo(map);
-
-
-
-// }
-
 document.addEventListener("DOMContentLoaded", async function(){
-
-    // set map to centre of singapore
-    let map = L.map("map");
-    map.setView([1.3521,103.82],13);
-
-    // setup the tile layers
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(map);
 
     document.querySelector("#submitBtn").addEventListener("click",async function(){
         let input = document.querySelector("#input").value;
-        // console.log(input);
-        let output = await search(1.29,103.85,input);
-        // console.log(output.results);
+        schoolLayerGroup.clearLayers();
+        s_marker.remove();
 
 
         // API Endpoint: https://data.gov.sg/api/action/datastore_search?resource_id=139a3035-e624-4f56-b63f-89ae28d4ae4c&q={postal_code}
@@ -67,29 +68,26 @@ document.addEventListener("DOMContentLoaded", async function(){
         console.log(lat);
         console.log(long);
         // drawMarkerOnMap(lat,long);
-        let s_marker = L.marker([lat, long]);
-         s_marker.addTo(map);
+        s_marker = L.marker([lat, long], {icon: redIcon});
+        map.setView([lat, long], 13)
+        // s_marker = L.marker([lat, long]);
+        s_marker.addTo(map);
+        s_marker.bindPopup(`<p>${postalCodeResult.results[0].ADDRESS}</p>`)
 
-         let schoolResult = await search(lat,long,"school");
-        //  console.log(schoolResult);
+        let schoolResult = await search(lat,long,"school");
+        let foodResult = await search(lat,long,"hawker");
 
-        // drawMarkerOnMap(schoolResult);
+        console.log(foodResult);
+        
 
-        //  map.setView(lat,long, 13)
+        // let schoolLayer = drawMarkerOnLayer(schoolResult);
 
-        //  map.removeLayer(s_marker);
+        schoolLayerGroup = drawMarkerOnLayer(schoolResult).addTo(map);
 
-        for(let x of schoolResult.results){
+        // schoolLayerGroup.addTo(map);
 
-            lat = x.geocodes.main.latitude;
-            long = x.geocodes.main.longitude;
-            console.log(lat);    
-            console.log(long);        
-            L.marker([lat, long]).addTo(map);
+         
 
-           
-            // nearbyMarker.addTo(map);
-        }
 
 
 
@@ -98,31 +96,41 @@ document.addEventListener("DOMContentLoaded", async function(){
 
     })
 
-    
-
-
-
-
-
-
 })
 
-async function drawMarkerOnMap(results){
+function drawMarkerOnLayer(data){
 
-    let nearbyLocation = await results;
-    let lat = "";
-    let long = "";
-    console.log(nearbyLocation.results[0].geocodes.main.latitude);
-    for(let x of nearbyLocation.results){
-
-        lat = x.geocodes.main.latitude;
-        long = x.geocodes.main.longitude;
-        console.log(lat);    
-        console.log(long);        
-    
-       
-        // nearbyMarker.addTo(map);
+    let length = data.results.length;
+    console.log(data.results.length)
+    let nearbyLocationMarkerLayer = L.markerClusterGroup();
+    for(let i=0; i<length; i++){
+        // console.log(data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude);
+        // console.log(data.results[i].name);
+        let name = data.results[i].name;
+        if (name.includes("Primary")||name.includes("primary")) {
+            console.log(name);
+            let schoolMarker=L.marker([data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude]).addTo(nearbyLocationMarkerLayer);
+            schoolMarker.bindPopup(`<p>${data.results[i].name}</p>`)
+            name = "";
+        }
+        // L.marker([data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude]).addTo(nearbyLocationMarkerLayer);
     }
 
+        return nearbyLocationMarkerLayer;
+       
+}
 
+function drawMarkerOnLayerGroup(data){
+
+    let length = data.results.length;
+    console.log(data.results.length)
+    
+    let nearbyLocationMarkerLayerGroup = L.layerGroup();
+    for(let i=0; i<length; i++){
+        console.log(data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude);
+        L.marker([data.results[i].geocodes.main.latitude,data.results[i].geocodes.main.longitude]).addTo(nearbyLocationMarkerLayerGroup);
+    }
+
+        return nearbyLocationMarkerLayerGroup;
+       
 }
